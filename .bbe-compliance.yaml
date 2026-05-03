@@ -1,0 +1,69 @@
+# BBE Compliance Manifest — bbe-secrets-vault
+#
+# Validated against bbe-coord/.bbe-coord/COMPLIANCE_MANIFEST.schema.json (v1.1.0).
+# Wave B initialisation. Closes Codex H-004 for this repo.
+
+schema_version: "1.1.0"
+repo: "bbe-secrets-vault"
+owner: "secrets"
+
+profile: "backend_service"
+profile_version: "1.0.0"
+
+required_gates:
+  - "doctrine-lint"
+  - "audit_log_append_only"
+  - "no_secret_values_in_logs"
+  - "permissions_0600_or_700"
+
+optional_gates:
+  - "evidence_artifact_retention"
+
+skip_policy:
+  dev: "allow_required_skips"
+  audit: "fail_required_skips"
+  release: "fail_required_skips"
+
+tool_requirements:
+  age:
+    dev: "optional"
+    audit: "required"
+    release: "required"
+  bash:
+    dev: "required"
+    audit: "required"
+    release: "required"
+  jq:
+    dev: "required"
+    audit: "required"
+    release: "required"
+
+evidence_outputs:
+  - "tmp/vault-test-audit.log"
+  - "tests/fixtures/vault-test-evidence/"
+
+cross_repo:
+  siblings:
+    - repo: "bbe-coord"
+      required: true
+    - repo: "bbe-fork-control-plane"
+      required: false
+    - repo: "bbe-security-scanner"
+      required: false
+
+verifier_registry:
+  T-SECRETS-VAULT:
+    script: "tests/test-vault-lifecycle.sh"
+    required_for: ["audit", "release"]
+
+notes: |
+  Per-vault BBE_VAULT_HOME isolation; append-only audit log; actor
+  tagging; no secret values in audit log. backend_service profile
+  reflects the service-style API (init/encrypt/decrypt/rotate via
+  secrets-vault.sh).
+
+  Wave B (this PR) initialises the cross-repo manifest. Backend-
+  specific gates (audit_log_append_only, no_secret_values_in_logs,
+  permissions_0600_or_700) are declared as required but their
+  ENFORCEMENT in bbe-coord lands in a future Wave (per Claude #4
+  5-wave plan, Wave C/D).
